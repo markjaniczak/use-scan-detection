@@ -12,7 +12,7 @@ npm i use-scan-detection
 
 ```
 useScanDetection({
-    onComplete: () => {}
+    onComplete: (code) => { console.log(code) }
 });
 ```
 
@@ -27,8 +27,8 @@ Parameters are supplied by a config object:
 | startCharacter | **Optional**. Character that barcode scanner prefixes input with. Code is only read if this character is read first. |
 | endCharacter | **Optional**. Character that barcode scanner suffixes input with. Code is evaluated early if this character is read. Defaults to line return and escape. |
 | onComplete | Function that is called when a complete barcode is scanned. Function is called with a single string which is the read code. |
-| onError | **Optional**. Function that is called when an incomplete barcode is scanned. Function is called with a single string which is currently always `incomplete scan detected`|
-| minLength | Minimum number of characters for a barcode to successfully read. Should be greater than 0. Defaults to `1`. |
+| onError | **Optional**. Function that is called when an incomplete barcode is scanned. Function is called with a single string which is the incomplete code. |
+| minLength | Minimum number of characters for a barcode to successfully read. Should be greater than 1. Defaults to `1`. |
 | ignoreIfFocusOn | **Optional**. DOM element that if focused prevents codes from being read. |
 | stopPropagation | Whether to call stopPropagation on each key event. Defaults to `false`. |
 | preventDefault | Whether to call preventDefault on each key event. Defaults to `false`. |
