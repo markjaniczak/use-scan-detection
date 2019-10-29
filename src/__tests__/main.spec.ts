@@ -104,7 +104,7 @@ describe('useScanDetection', () => {
             ignoreIfFocusOn: document
         }
         const result = renderHook(() => useScanDetection(config))
-        
+
         events.forEach(event => {
             document.dispatchEvent(event)
             act(() => {
@@ -123,6 +123,13 @@ describe('useScanDetection', () => {
         }
 
         const result = renderHook(() => useScanDetection(config))
+
+        events.slice(0, 2).forEach(event => {
+            document.dispatchEvent(event)
+            act(() => {
+                result.rerender()
+            })
+        })
 
         act(() => {
             result.unmount()
