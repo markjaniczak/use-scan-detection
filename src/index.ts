@@ -4,17 +4,24 @@ import {
     useRef
 } from "react";
 
+interface bufferCharacter {
+    time: number,
+    char: String
+}
+
 interface buffer {
-    current: String
+    current: Array<bufferCharacter>
 }
 
 interface config {
-    /** Maximum time between characters in milliseconds. Used to determine if input is from keyboard or a scanner. Defaults to 50ms.*/
-    waitTime?: number,
+    /** Time to wait from last character to then trigger an evaluation of the buffer. */
+    timeToEvaluate?: number,
+    /** Average time between characters in milliseconds. Used to determine if input is from keyboard or a scanner. Defaults to 50ms.*/
+    averageWaitTime?: number,
     /** Character that barcode scanner prefixes input with.*/
-    startCharacter?: number,
+    startCharacter?: Array<number>,
     /** Character that barcode scanner suffixes input with. Defaults to line return.*/
-    endCharacter?: number,
+    endCharacter?: Array<number>,
     /** Callback to use on complete scan input.*/
     onComplete: (code: String) => void,
     /** Callback to use on error. */
@@ -36,9 +43,10 @@ interface config {
  * @param param0 Config object
  */
 const useScanDetection = ({
-    waitTime = 50,
-    startCharacter,
-    endCharacter = 13,
+    timeToEvaluate = 100,
+    averageWaitTime = 50,
+    startCharacter = [],
+    endCharacter = [13, 27],
     onComplete,
     onError,
     minLength = 1,
@@ -48,29 +56,44 @@ const useScanDetection = ({
     container = document
 }: config) => {
 
-    const buffer: buffer = useRef("")
+    const buffer: buffer = useRef([])
     const timeout: any = useRef(false)
 
     const clearBuffer = () => {
-        buffer.current = ""
+        buffer.current = []
+    }
+
+    const evaluateBuffer = () => {
+        clearTimeout()
+        const sum = buffer.current
+            .reduce((result, { time }) => result + time, 0)
+        const avg = sum / buffer.current.length
+
+        const code = buffer.current
+            .slice(startCharacter.length > 0 ? 1 : 0)
+            .map(({ char }) => char)
+            .join("")
+            
+        if (
+            avg <= averageWaitTime
+            && buffer.current.length >= minLength
+        ) {
+            onComplete(code)
+        } else {
+            !!onError && onError(code)
+        }
+        clearBuffer()
     }
 
     const onKeyDown: Function = useCallback((event: KeyboardEvent) => {
         if (event.currentTarget !== ignoreIfFocusOn) {
-            if (event.keyCode === endCharacter) {
-                clearTimeout(timeout.current)
-                if (buffer.current.length >= minLength) {
-                    onComplete(buffer.current.slice(!!startCharacter ? 1 : 0))
-                }
-                else if (!!onError) {
-                    onError("incomplete scan detected")
-                }
-                clearBuffer()
+            if (endCharacter.includes(event.keyCode)) {
+                evaluateBuffer()
             }
-            if (buffer.current.length > 0 || event.keyCode === startCharacter || !startCharacter) {
+            if (buffer.current.length > 0 || startCharacter.includes(event.keyCode) || startCharacter.length === 0) {
                 clearTimeout(timeout.current)
-                timeout.current = setTimeout(clearBuffer, waitTime)
-                buffer.current += event.key
+                timeout.current = setTimeout(evaluateBuffer, timeToEvaluate)
+                buffer.current.push({ time: performance.now(), char: event.key })
             }
         }
         if (stopPropagation) {
@@ -82,7 +105,7 @@ const useScanDetection = ({
     }, [
             startCharacter,
             endCharacter,
-            waitTime,
+            timeToEvaluate,
             onComplete,
             onError,
             minLength,

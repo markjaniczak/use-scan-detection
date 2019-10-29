@@ -5,6 +5,10 @@ jest.useFakeTimers()
 
 describe('useScanDetection', () => {
 
+    beforeEach(() => {
+        jest.spyOn(performance, 'now').mockImplementation(() => Math.random() * 50)
+    })
+
     afterEach(() => {
         jest.clearAllTimers()
     })
@@ -28,6 +32,7 @@ describe('useScanDetection', () => {
         const config = {
             onComplete: jest.fn()
         }
+
         const result = renderHook(() => useScanDetection(config))
 
         events.forEach(event => {
@@ -48,6 +53,7 @@ describe('useScanDetection', () => {
             onError: jest.fn(),
             minLength: 5
         }
+
         const result = renderHook(() => useScanDetection(config))
 
         events.forEach(event => {
@@ -65,6 +71,9 @@ describe('useScanDetection', () => {
             onError: jest.fn(),
             onComplete: jest.fn()
         }
+
+        jest.spyOn(performance, 'now').mockImplementation(() => 100)
+
         const result = renderHook(() => useScanDetection(config))
 
         events.forEach(event => {
@@ -84,7 +93,7 @@ describe('useScanDetection', () => {
     it("should wait for startCharacter to be inputted", () => {
         const config = {
             onComplete: jest.fn(),
-            startCharacter: 49
+            startCharacter: [49]
         }
         const result = renderHook(() => useScanDetection(config))
 

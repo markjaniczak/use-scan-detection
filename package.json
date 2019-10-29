@@ -1,6 +1,6 @@
 {
   "name": "use-scan-detection",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "A react hook for detecting barcode scanner input.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
