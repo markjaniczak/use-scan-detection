@@ -6,10 +6,6 @@ jest.useFakeTimers()
 describe('useScanDetection', () => {
 
     beforeEach(() => {
-        jest.spyOn(performance, 'now').mockImplementation(() => Math.random() * 50)
-    })
-
-    afterEach(() => {
         jest.clearAllTimers()
     })
 
@@ -23,12 +19,16 @@ describe('useScanDetection', () => {
             key: "2"
         },
         {
+            keyCode: 51,
+            key: "3"
+        },
+        {
             keyCode: 13,
             key: "Enter"
         }
     ].map(key => new KeyboardEvent("keydown", key))
 
-    it("should call onComplete on a complete scan", () => {
+    it("should call onComplete on a complete code", () => {
         const config = {
             onComplete: jest.fn()
         }
@@ -45,9 +45,30 @@ describe('useScanDetection', () => {
         expect(config.onComplete)
             .toHaveBeenCalled()
         expect(config.onComplete)
-            .toBeCalledWith("12")
+            .toBeCalledWith("123")
     })
-    it("should call onError on a partial scan", () => {
+    it('should evaluate after timeToEvaluate has passed from the last character', () => {
+        const config = {
+            onComplete: jest.fn()
+        }
+
+        const result = renderHook(() => useScanDetection(config))
+
+        events.slice(0, -1).forEach(event => {
+            document.dispatchEvent(event)
+            act(() => {
+                result.rerender()
+            })
+        })
+
+        jest.advanceTimersToNextTimer()
+
+        expect(config.onComplete)
+            .toHaveBeenCalled()
+        expect(config.onComplete)
+            .toBeCalledWith("123")
+    })
+    it("should call onError on an incomplete code", () => {
         const config = {
             onComplete: jest.fn(),
             onError: jest.fn(),
@@ -66,31 +87,30 @@ describe('useScanDetection', () => {
         expect(config.onError)
             .toHaveBeenCalled()
     })
-    it("should be incomplete if keys are too far apart", () => {
+    it("should not call onComplete or onError if keypresses are too far apart", () => {
         const config = {
             onError: jest.fn(),
             onComplete: jest.fn()
         }
 
-        jest.spyOn(performance, 'now').mockImplementation(() => 100)
-
         const result = renderHook(() => useScanDetection(config))
 
-        events.forEach(event => {
+        events.forEach((event, k) => {
+            jest.spyOn(performance, "now").mockImplementationOnce(() => 250 * k)
             document.dispatchEvent(event)
             act(() => {
                 result.rerender()
             })
-            jest.runAllTimers()
         })
 
         expect(config.onError)
+            .not
             .toHaveBeenCalled()
         expect(config.onComplete)
             .not
             .toHaveBeenCalled()
     })
-    it("should wait for startCharacter to be inputted", () => {
+    it("should wait for startCharacter to be inputted before buffering", () => {
         const config = {
             onComplete: jest.fn(),
             startCharacter: [49]
@@ -105,11 +125,12 @@ describe('useScanDetection', () => {
         })
 
         expect(config.onComplete)
-            .toBeCalledWith("2")
+            .toBeCalledWith("23")
     })
-    it("should ignore input on ignoreIfFocusOn when focused", () => {
+    it("should ignore keypress events when element in ignoreIfFocusOn is focused", () => {
         const config = {
             onComplete: jest.fn(),
+            onError: jest.fn(),
             ignoreIfFocusOn: document
         }
         const result = renderHook(() => useScanDetection(config))
@@ -124,9 +145,12 @@ describe('useScanDetection', () => {
         expect(config.onComplete)
             .not
             .toBeCalled()
+        expect(config.onError)
+            .not
+            .toBeCalled()
     })
 
-    it("should cleanup any timers", () => {
+    it("should cleanup any timers on unmount", () => {
         const config = {
             onComplete: jest.fn()
         }
@@ -159,11 +183,11 @@ describe('useScanDetection', () => {
         const event = events[0]
 
         const mockPreventDefault = jest.spyOn(event, "preventDefault")
-        
+
         document.dispatchEvent(event)
 
         expect(mockPreventDefault)
-        .toHaveBeenCalled()
+            .toHaveBeenCalled()
     })
     it('should respect stopPropagation', () => {
         const config = {
@@ -176,7 +200,7 @@ describe('useScanDetection', () => {
         const event = events[0]
 
         const mockStopPropagation = jest.spyOn(event, "stopPropagation")
-        
+
         document.dispatchEvent(event)
 
         expect(mockStopPropagation)

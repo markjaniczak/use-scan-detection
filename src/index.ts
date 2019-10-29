@@ -62,25 +62,26 @@ const useScanDetection = ({
     const clearBuffer = () => {
         buffer.current = []
     }
-
     const evaluateBuffer = () => {
-        clearTimeout()
+        clearTimeout(timeout.current)
         const sum = buffer.current
-            .reduce((result, { time }) => result + time, 0)
-        const avg = sum / buffer.current.length
+            .map(({ time }, k, arr) => k > 0 ? time - arr[k - 1].time : 0)
+            .slice(1)
+            .reduce((total, delta) => total + delta, 0)
+        const avg = sum / (buffer.current.length - 1)
 
         const code = buffer.current
             .slice(startCharacter.length > 0 ? 1 : 0)
             .map(({ char }) => char)
             .join("")
-            
+
         if (
             avg <= averageWaitTime
-            && buffer.current.length >= minLength
+            && buffer.current.slice(startCharacter.length > 0 ? 1 : 0).length >= minLength
         ) {
             onComplete(code)
         } else {
-            !!onError && onError(code)
+            avg <= averageWaitTime && !!onError && onError(code)
         }
         clearBuffer()
     }
