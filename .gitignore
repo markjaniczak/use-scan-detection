@@ -1,2 +1,8 @@
+## modules
 node_modules
+
+## build
 dist
+
+## testing
+coverage

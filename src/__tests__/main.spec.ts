@@ -138,4 +138,39 @@ describe('useScanDetection', () => {
         expect(jest.getTimerCount())
             .toEqual(0)
     })
+
+    it('should respect preventDefault', () => {
+        const config = {
+            onComplete: jest.fn(),
+            preventDefault: true
+        }
+
+        renderHook(() => useScanDetection(config))
+
+        const event = events[0]
+
+        const mockPreventDefault = jest.spyOn(event, "preventDefault")
+        
+        document.dispatchEvent(event)
+
+        expect(mockPreventDefault)
+        .toHaveBeenCalled()
+    })
+    it('should respect stopPropagation', () => {
+        const config = {
+            onComplete: jest.fn(),
+            stopPropagation: true
+        }
+
+        renderHook(() => useScanDetection(config))
+
+        const event = events[0]
+
+        const mockStopPropagation = jest.spyOn(event, "stopPropagation")
+        
+        document.dispatchEvent(event)
+
+        expect(mockStopPropagation)
+            .toHaveBeenCalled()
+    })
 })
