@@ -96,10 +96,10 @@ const useScanDetection = ({
         if (preventDefault) {
             event.preventDefault()
         }
-        if (event.currentTarget !== ignoreIfFocusOn) {
+        if (event.currentTarget === ignoreIfFocusOn) {
             return 
         }
-        if(!skipNodeTypes.includes((event.target as any).type)) {
+        if(skipNodeTypes.includes((event.target as any).type)) {
             return
         }
         if (endCharacter.includes(event.keyCode)) {
