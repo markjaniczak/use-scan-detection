@@ -30,6 +30,8 @@ interface config {
     minLength?: number,
     /** Ignore scan input if this node is focused.*/
     ignoreIfFocusOn?: Node,
+    /** nodes to skip i.e. text useful when you want to stick to default behaviour for inputs, but trigger something special otherwise  */
+    skipNodeTypes?: string[];
     /** Stop propagation on keydown event. Defaults to false.*/
     stopPropagation?: Boolean,
     /** Prevent default on keydown event. Defaults to false.*/
@@ -51,6 +53,7 @@ const useScanDetection = ({
     onError,
     minLength = 1,
     ignoreIfFocusOn,
+    skipNodeTypes = [],
     stopPropagation = false,
     preventDefault = false,
     container = document
@@ -87,21 +90,25 @@ const useScanDetection = ({
     }
 
     const onKeyDown: Function = useCallback((event: KeyboardEvent) => {
-        if (event.currentTarget !== ignoreIfFocusOn) {
-            if (endCharacter.includes(event.keyCode)) {
-                evaluateBuffer()
-            }
-            if (buffer.current.length > 0 || startCharacter.includes(event.keyCode) || startCharacter.length === 0) {
-                clearTimeout(timeout.current)
-                timeout.current = setTimeout(evaluateBuffer, timeToEvaluate)
-                buffer.current.push({ time: performance.now(), char: event.key })
-            }
-        }
         if (stopPropagation) {
             event.stopPropagation()
         }
         if (preventDefault) {
             event.preventDefault()
+        }
+        if (event.currentTarget !== ignoreIfFocusOn) {
+            return 
+        }
+        if(!skipNodeTypes.includes((event.target as any).type)) {
+            return
+        }
+        if (endCharacter.includes(event.keyCode)) {
+            evaluateBuffer()
+        }
+        if (buffer.current.length > 0 || startCharacter.includes(event.keyCode) || startCharacter.length === 0) {
+            clearTimeout(timeout.current)
+            timeout.current = setTimeout(evaluateBuffer, timeToEvaluate)
+            buffer.current.push({time: performance.now(), char: event.key})
         }
     }, [
             startCharacter,
