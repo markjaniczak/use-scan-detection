@@ -1,3 +1,7 @@
+# Project Status
+
+This project is no longer maintained. Consider using [`use-symbology-scanner`](https://github.com/markjaniczak/symbology-scanner) instead.
+
 # useScanDetection
 
 ![npm](https://img.shields.io/npm/v/use-scan-detection)
